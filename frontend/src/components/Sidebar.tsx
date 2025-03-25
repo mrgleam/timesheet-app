@@ -152,7 +152,7 @@ export default function Sidebar() {
           }}
         >
           <ListItem>
-          <ListItemButton
+            <ListItemButton
               role="menuitem"
               component="a"
               href="/"
@@ -166,10 +166,15 @@ export default function Sidebar() {
           </ListItem>
 
           <ListItem>
-            <ListItemButton>
+            <ListItemButton
+              role="menuitem"
+              component="a"
+              href="/time-table/"
+              selected={location.pathname === '/time-table/'}
+            >
               <DashboardRoundedIcon />
               <ListItemContent>
-                <Typography level="title-sm">Dashboard</Typography>
+                <Typography level="title-sm">Time Table</Typography>
               </ListItemContent>
             </ListItemButton>
           </ListItem>

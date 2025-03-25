@@ -4,6 +4,7 @@ import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
 import Layout from "./Layout";
 import Home from "./Home";
 import MyProfile from "./components/MyProfile";
+import TimeTable from "./components/TimeTable";
 
 const root = document.getElementById("root");
 
@@ -17,6 +18,7 @@ ReactDOM.createRoot(root).render(
       <Layout>
         <Routes>
           <Route path="/" element={<Home />} />
+          <Route path="/time-table" element={<TimeTable />} />
           <Route path="/my-profile" element={<MyProfile />} />
         </Routes>
       </Layout>
