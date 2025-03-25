@@ -1,8 +1,9 @@
 import React from "react";
 import ReactDOM from "react-dom/client";
-import { LocoSplash } from "./LocoSplash";
-
-import "./index.css";
+import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
+import Layout from "./Layout";
+import Home from "./Home";
+import MyProfile from "./components/MyProfile";
 
 const root = document.getElementById("root");
 
@@ -12,6 +13,13 @@ if (!root) {
 
 ReactDOM.createRoot(root).render(
   <React.StrictMode>
-    <LocoSplash />
+    <Router>
+      <Layout>
+        <Routes>
+          <Route path="/" element={<Home />} />
+          <Route path="/my-profile" element={<MyProfile />} />
+        </Routes>
+      </Layout>
+    </Router>
   </React.StrictMode>,
 );
