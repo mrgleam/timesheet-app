@@ -18,6 +18,9 @@ import Menu from '@mui/joy/Menu';
 import MenuButton from '@mui/joy/MenuButton';
 import MenuItem from '@mui/joy/MenuItem';
 import Dropdown from '@mui/joy/Dropdown';
+import { useForm, Controller } from 'react-hook-form';
+import { zodResolver } from '@hookform/resolvers/zod';
+import * as z from 'zod';
 
 import FilterAltIcon from '@mui/icons-material/FilterAlt';
 import SearchIcon from '@mui/icons-material/Search';
@@ -27,7 +30,46 @@ import KeyboardArrowLeftIcon from '@mui/icons-material/KeyboardArrowLeft';
 import MoreHorizRoundedIcon from '@mui/icons-material/MoreHorizRounded';
 import HomeRoundedIcon from '@mui/icons-material/HomeRounded';
 import ChevronRightRoundedIcon from '@mui/icons-material/ChevronRightRounded';
-import { Breadcrumbs, Textarea } from '@mui/joy';
+import { Breadcrumbs, FormHelperText, Textarea } from '@mui/joy';
+
+const floatNumber = (min?: number, max?: number) =>
+    z
+        .string()
+        .transform((value) =>
+            max && Number(value) > max
+                ? max
+                : min && Number(value) < min
+                    ? min
+                    : value === ''
+                        ? ''
+                        : Number(value)
+        )
+        .refine((value) => !isNaN(Number(value)), {
+            message: 'invalid',
+        })
+        .refine((value) => value !== '', {
+            message: 'required',
+        })
+        .refine((value) => (max ? Number(value) <= max : true), {
+            message: 'tooBig',
+        })
+        .refine((value) => (min || min === 0 ? Number(value) >= min : true), {
+            message: 'tooSmall',
+        });
+
+// Define types for the form data
+type TimeRowFormData = {
+    date: string;
+    activity: string;
+    hours: number;
+};
+
+// Create separate validation schemas
+const timeRowSchema = z.object({
+    date: z.string().date().nonempty('Date is required'),
+    activity: z.string().max(255, 'Activity must be 255 characters or less').nonempty('Activity is required'),
+    hours: floatNumber(0, 24),
+});
 
 const rows = [
     {
@@ -267,17 +309,29 @@ export default function TimeTable() {
     const [selected, setSelected] = React.useState<readonly string[]>([]);
     const [open, setOpen] = React.useState(false);
     const [edit, setEdit] = React.useState(false);
-    const [hours, setHours] = React.useState('');
-
-    const handleHoursChange = (event: { target: { value: string; }; }) => {
-        const newValue = event.target.value;
-        if (newValue === '' || (parseFloat(newValue) >= 0 && parseFloat(newValue) <= 24)) {
-            setHours(newValue);
-        }
-    }
 
     const handleCloseEdit = () => {
         setEdit(false);
+    };
+
+    // Time Row form
+    const {
+        control: timeRowControl,
+        handleSubmit: handleTimeRowSubmit,
+        formState: { errors: timeRowErrors }
+    } = useForm<TimeRowFormData>({
+        resolver: zodResolver(timeRowSchema),
+        defaultValues: {
+            date: '2020-01-01',
+            activity: '',
+            hours: 0,
+        },
+    });
+
+    const onTimeRowSubmit = (data: TimeRowFormData) => {
+        console.log('Time row data submitted:', data);
+        handleCloseEdit();
+        // Handle profile update logic here
     };
 
     return (
@@ -523,26 +577,49 @@ export default function TimeTable() {
                         <Modal open={edit} onClose={handleCloseEdit} sx={{ zIndex: 13000 }}>
                             <ModalDialog aria-labelledby="edit-modal" layout="fullscreen" sx={{ zIndex: 13001 }}>
                                 <ModalClose />
-                                <Typography id="edit-modal" level="h2">Edit Activity & Time</Typography>
-                                <Divider sx={{ my: 2 }} />
-                                <FormControl>
-                                    <FormLabel>Activity</FormLabel>
-                                    <Textarea placeholder="Activity Details" minRows={4} />
-                                </FormControl>
-                                <FormControl>
-                                    <FormLabel>Hours</FormLabel>
-                                    <Input
-                                        type="number"
-                                        placeholder="Enter an hours between 0 and 24"
-                                        value={hours}
-                                        onChange={handleHoursChange}
-                                    />
-                                </FormControl>
-                                <Sheet sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
-                                    <Button color="primary" onClick={() => setOpen(false)}>
-                                        Submit
-                                    </Button>
-                                </Sheet>
+                                <form onSubmit={handleTimeRowSubmit(onTimeRowSubmit)}>
+                                    <Typography id="edit-modal" level="h2">Edit Activity & Time</Typography>
+                                    <Divider sx={{ my: 2 }} />
+                                    <FormControl error={!!timeRowErrors.date}>
+                                        <FormLabel>Date</FormLabel>
+                                        <Controller name="date" control={timeRowControl} render={({ field }) => (
+                                            <>
+                                                <Input type="hidden" {...field} />
+                                                {timeRowErrors.date?.message && <FormHelperText>{timeRowErrors.date?.message}</FormHelperText>}
+                                            </>
+                                        )}>
+                                        </Controller>
+                                    </FormControl>
+                                    <FormControl error={!!timeRowErrors.activity}>
+                                        <FormLabel>Activity</FormLabel>
+                                        <Controller name="activity" control={timeRowControl} render={({ field }) => (
+                                            <>
+                                                <Textarea placeholder="Activity Details" minRows={4} {...field} />
+                                                {timeRowErrors.activity?.message && <FormHelperText>{timeRowErrors.activity?.message}</FormHelperText>}
+                                            </>
+                                        )}>
+                                        </Controller>
+                                    </FormControl>
+                                    <FormControl error={!!timeRowErrors.hours}>
+                                        <FormLabel>Hours</FormLabel>
+                                        <Controller name="hours" control={timeRowControl} render={({ field }) => (
+                                            <>
+                                                <Input
+                                                    type="number"
+                                                    placeholder="Enter an hours between 0 and 24"
+                                                    {...field}
+                                                />
+                                                {timeRowErrors.hours?.message && <FormHelperText>{timeRowErrors.hours?.message}</FormHelperText>}
+                                            </>
+                                        )}>
+                                        </Controller>
+                                    </FormControl>
+                                    <Sheet sx={{ display: 'flex', flexDirection: 'column', gap: 2, pt: 2 }}>
+                                        <Button type="submit" color="primary">
+                                            Submit
+                                        </Button>
+                                    </Sheet>
+                                </form>
                             </ModalDialog>
                         </Modal>
                     </Box>
